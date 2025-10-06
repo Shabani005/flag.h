@@ -1,5 +1,6 @@
 #define NB_IMPLEMENTATION
 #include "nb.h"
+#include <assert.h>
 
 typedef struct {
   char**    label;
@@ -23,6 +24,18 @@ void nb_flag_append_impl(nb_flags *flags, char *label, char *desc){
   flags->count++;
 }
 
+size_t naive_index(nb_flags *flags, const char* value){
+  bool found;
+  for(size_t i=0; i<flags->count; ++i){
+    if (strcmp(flags->label[i], value) == 0){
+      return i;
+      found = true;
+    }
+  }
+  assert(found);
+  return -1;
+}
+
 void nb_flag(nb_flags *flags, int argc, char** argv){
   if (flags->count > 0){
     if (argc < 2){
@@ -34,10 +47,15 @@ void nb_flag(nb_flags *flags, int argc, char** argv){
       // here add logic for parsing flags
       for (size_t i=0; i<argc; ++i){
         //printf("%zu\n", i);
-        if (argv[i][0] == '-' ){ // && argv[i][1] == '-'          //printf("found {-} in %s\n", argv[i]);
+        if (argv[i][0] == '-' && argv[i][1] != '-'){ // && argv[i][1] == '-'          //printf("found {-} in %s\n", argv[i]);
           memmove(argv[i], argv[i]+1, strlen(argv[i]));
+          printf("found flag: %s\n", flags->label[naive_index(flags, argv[i])]);
           // in python it would be if flags->labels[argv[i]] != null
-       } 
+       }
+       if (argv[i][0] == '-' && argv[i][1] == '-'){
+         memmove(argv[i], argv[i]+2, strlen(argv[i]));
+         printf("found flag: %s\n", flags->label[naive_index(flags, argv[i])]);
+       }
       }     
     }
   }     
@@ -47,5 +65,5 @@ int main(int argc, char **argv){
   nb_flags flags = {0};
   nb_flag_append_impl(&flags, "help", "display other commands");
   nb_flag(&flags, argc, argv);
-  printf("%c\n", flags.label[0][0]);
+  //printf("%c\n", flags.label[0][0]);
 }
