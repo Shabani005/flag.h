@@ -1,6 +1,7 @@
-#define NB_IMPLEMENTATION
-#include "nb.h"
+#include <stdlib.h>
 #include <assert.h>
+#include <string.h>
+#include <stdio.h>
 
 // pointer to function for flags that run stuff to impl later
 
@@ -10,24 +11,31 @@ typedef struct {
   // int      (*func_ptr)()
   size_t    count;
   size_t    capacity;
-} nb_flags;
+} fg_flags;
 
-void nb_flag_append_impl(nb_flags *flags, char *label, char *desc){
+#define fg_index fg_naive_index
+
+void   fg_append(fg_flags *flags, char *label, char *desc);
+size_t fg_naive_index(fg_flags *flags, const char* value);
+void   fg_run(fg_flags *flags, int argc, char** argv);
+
+#ifdef FG_IMPLEMENTATION
+void fg_append(fg_flags *flags, char *label, char *desc){
   if (flags->capacity == 0){
     flags->capacity = 128;
-    flags->label = malloc(sizeof(char*)*flags->capacity);
-    flags->desc = malloc(sizeof(char*)*flags->capacity);
+    flags->label = (char**)malloc(sizeof(char*)*flags->capacity);
+    flags->desc =  (char**)malloc(sizeof(char*)*flags->capacity);
   } if (flags->count >= flags->capacity){
     flags->capacity *=2;
-    flags->label = realloc(flags->label, sizeof(char*) * flags->capacity);
-    flags->desc  = realloc(flags->desc, sizeof(char*) * flags->capacity); 
+    flags->label = (char**)realloc(flags->label, sizeof(char*) * flags->capacity);
+    flags->desc  = (char**)realloc(flags->desc, sizeof(char*) * flags->capacity); 
   }
   flags->label[flags->count] = strdup(label);
   flags->desc[flags->count] = strdup(desc);
   flags->count++;
 }
 
-size_t naive_index(nb_flags *flags, const char* value){
+size_t naive_index(fg_flags *flags, const char* value){
   bool found;
   for(size_t i=0; i<flags->count; ++i){
     if (strcmp(flags->label[i], value) == 0){
@@ -39,12 +47,13 @@ size_t naive_index(nb_flags *flags, const char* value){
   return -1;
 }
 
-void nb_flag(nb_flags *flags, int argc, char** argv){
+void fg_run(fg_flags *flags, int argc, char** argv){
   if (flags->count > 0){
     if (argc < 2){
+      printf("All commands:\n");
       for (size_t i=0; i<flags->count; ++i){
         if (!flags->desc[i]) flags->desc[i] = "no given desc"; // impossible case
-        printf("-%s -> %s \n", flags->label[i], flags->desc[i]);
+          printf("    --%s, -%s  %s\n", flags->label[i], flags->label[i], flags->desc[i]); //use strlen comp to align by longest string
       }
     } else {
       // here add logic for parsing flags
@@ -52,21 +61,17 @@ void nb_flag(nb_flags *flags, int argc, char** argv){
         //printf("%zu\n", i);
         if (argv[i][0] == '-' && argv[i][1] != '-'){ // && argv[i][1] == '-'          //printf("found {-} in %s\n", argv[i]);
           memmove(argv[i], argv[i]+1, strlen(argv[i]));
-          printf("found flag: %s\n", flags->label[naive_index(flags, argv[i])]);
+          printf("%s\n", flags->desc[naive_index(flags, argv[i])]);
           // in python it would be if flags->labels[argv[i]] != null
        }
        if (argv[i][0] == '-' && argv[i][1] == '-'){
          memmove(argv[i], argv[i]+2, strlen(argv[i]));
-         printf("found flag: %s\n", flags->label[naive_index(flags, argv[i])]);
+         printf("%s\n", flags->desc[naive_index(flags, argv[i])]);
        }
       }     
     }
   }     
 }
+#endif
 
-int main(int argc, char **argv){
-  nb_flags flags = {0};
-  nb_flag_append_impl(&flags, "help", "display other commands");
-  nb_flag(&flags, argc, argv);
-  //printf("%c\n", flags.label[0][0]);
-}
+
