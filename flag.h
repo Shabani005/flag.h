@@ -5,10 +5,11 @@
 
 // pointer to function for flags that run stuff to impl later
 
+
 typedef struct {
   char**    label;
   char**    desc;
-  // int      (*func_ptr)()
+  int       (*func_ptr)();
   size_t    count;
   size_t    capacity;
 } fg_flags;
@@ -18,6 +19,7 @@ typedef struct {
 void   fg_append(fg_flags *flags, char *label, char *desc);
 size_t fg_naive_index(fg_flags *flags, const char* value);
 void   fg_run(fg_flags *flags, int argc, char** argv);
+void   fg_append_ptr(fg_flags *flags, char *label, void (*func)(void));
 
 #ifdef FG_IMPLEMENTATION
 void fg_append(fg_flags *flags, char *label, char *desc){
@@ -34,6 +36,27 @@ void fg_append(fg_flags *flags, char *label, char *desc){
   flags->desc[flags->count] = strdup(desc);
   flags->count++;
 }
+
+
+
+void fg_append_ptr(fg_flags *flags, char *label, void(*func)(void)){
+  if (flags->capacity == 0){
+    flags->capacity = 128;
+    flags->label = (char**)malloc(sizeof(char*)*flags->capacity);
+    flags->desc =  (char**)malloc(sizeof(char*)*flags->capacity);
+  } if (flags->count >= flags->capacity){
+    flags->capacity *=2;
+    flags->label = (char**)realloc(flags->label, sizeof(char*) * flags->capacity);
+    flags->desc  = (char**)realloc(flags->desc, sizeof(char*) * flags->capacity); 
+  }
+  flags->label[flags->count] = strdup(label);
+  flags->desc[flags->count] = "\0";
+  // TODO: remove desc null terminator and fix in terms on fg_run to not print \n
+  //flags->func_ptr = func;
+  func();
+  flags->count++;
+}
+
 
 size_t naive_index(fg_flags *flags, const char* value){
   bool found;
