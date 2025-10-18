@@ -3,9 +3,6 @@
 #include <string.h>
 #include <stdio.h>
 
-// pointer to function for flags that run stuff to impl later
-
-
 typedef struct {
   char**    label;
   char**    desc;
@@ -36,8 +33,6 @@ void fg_append(fg_flags *flags, char *label, char *desc){
   flags->desc[flags->count] = strdup(desc);
   flags->count++;
 }
-
-
 
 void fg_append_ptr(fg_flags *flags, char *label, void(*func)(void)){
   if (flags->capacity == 0){
