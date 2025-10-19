@@ -11,7 +11,13 @@ typedef struct {
   size_t    capacity;
 } fg_flags;
 
+typedef struct {
+  size_t current;
+  size_t total;
+} fg_progressbar;
+
 #define fg_index fg_naive_index
+#define FG_PB_COUNT 33
 
 void   fg_append(fg_flags *flags, char *label, char *desc);
 size_t fg_naive_index(fg_flags *flags, const char* value);
@@ -52,7 +58,6 @@ void fg_append_ptr(fg_flags *flags, char *label, void(*func)(void)){
   flags->count++;
 }
 
-
 size_t naive_index(fg_flags *flags, const char* value){
   bool found;
   for(size_t i=0; i<flags->count; ++i){
@@ -89,6 +94,25 @@ void fg_run(fg_flags *flags, int argc, char** argv){
       }     
     }
   }     
+}
+
+void fg_progress_update(fg_progressbar *pb, size_t total) {
+    pb->total = total;
+    pb->current++;
+
+    if (pb->current > total)
+        pb->current = total;
+
+    float progress = (float)pb->current / total;
+    size_t filled = (size_t)(progress * FG_PB_COUNT);
+
+    char buf[FG_PB_COUNT + 1];
+    for (size_t i = 0; i < FG_PB_COUNT; ++i)
+        buf[i] = (i < filled) ? '#' : ' ';
+    buf[FG_PB_COUNT] = '\0';
+
+    printf("\r[%s] %3.0f%%", buf, progress * 100);
+    fflush(stdout);
 }
 #endif
 
