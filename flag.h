@@ -58,7 +58,7 @@ void fg_append_ptr(fg_flags *flags, char *label, void(*func)(void)){
   flags->count++;
 }
 
-size_t naive_index(fg_flags *flags, const char* value){
+size_t fg_naive_index(fg_flags *flags, const char* value){
   bool found;
   for(size_t i=0; i<flags->count; ++i){
     if (strcmp(flags->label[i], value) == 0){
@@ -66,7 +66,9 @@ size_t naive_index(fg_flags *flags, const char* value){
       found = true;
     }
   }
-  assert(found);
+  if (!found){
+    printf("error: unrecognized command-line option ‘-%s’.\n", value); // TODO: did you mean %s?
+  }
   return -1;
 }
 
@@ -83,13 +85,15 @@ void fg_run(fg_flags *flags, int argc, char** argv){
       for (size_t i=0; i<argc; ++i){
         //printf("%zu\n", i);
         if (argv[i][0] == '-' && argv[i][1] != '-'){ // && argv[i][1] == '-'          //printf("found {-} in %s\n", argv[i]);
+          if (fg_index(flags, argv[i]) == -1) exit(-1);
           memmove(argv[i], argv[i]+1, strlen(argv[i]));
-          printf("%s\n", flags->desc[naive_index(flags, argv[i])]);
+          printf("%s\n", flags->desc[fg_index(flags, argv[i])]);
           // in python it would be if flags->labels[argv[i]] != null
        }
        if (argv[i][0] == '-' && argv[i][1] == '-'){
+         if (fg_index(flags, argv[i]) == -1) exit(-1);
          memmove(argv[i], argv[i]+2, strlen(argv[i]));
-         printf("%s\n", flags->desc[naive_index(flags, argv[i])]);
+         printf("%s\n", flags->desc[fg_index(flags, argv[i])]);
        }
       }     
     }
