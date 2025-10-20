@@ -6,7 +6,7 @@
 typedef struct {
   char**    label;
   char**    desc;
-  int       (**func_ptr)();
+  void      (**func_ptr)(void);
   size_t    count;
   size_t    capacity;
 } fg_flags;
@@ -43,17 +43,18 @@ void fg_append(fg_flags *flags, char *label, char *desc){
 void fg_append_ptr(fg_flags *flags, char *label, void(*func)(void)){
   if (flags->capacity == 0){
     flags->capacity = 128;
-    flags->label = (char**)malloc(sizeof(char*)*flags->capacity);
-    flags->desc =  (char**)malloc(sizeof(char*)*flags->capacity);
-    flags.func_ptr = (void**)malloc(sizeof(void*)*flags.capacity);
+    flags->label   = (char**)malloc(sizeof(char*)*flags->capacity);
+    flags->desc    = (char**)malloc(sizeof(char*)*flags->capacity);
+    flags->func_ptr = (void(**) (void)) malloc(sizeof(void(*)(void))*flags->capacity);
   } if (flags->count >= flags->capacity){
     flags->capacity *=2;
-    flags->label = (char**)realloc(flags->label, sizeof(char*) * flags->capacity);
-    flags->desc  = (char**)realloc(flags->desc, sizeof(char*) * flags->capacity);
-    flags->func_ptr = (void**)realloc(flags->func_ptr, sizeof(void*) * flags->capacity);
+    flags->label    = (char**)realloc(flags->label, sizeof(char*) * flags->capacity);
+    flags->desc     = (char**)realloc(flags->desc, sizeof(char*) * flags->capacity);
+    flags->func_ptr = (void(**) (void)) realloc(flags->func_ptr, sizeof(void(*)(void)) * flags->capacity);
   }
   flags->label[flags->count] = strdup(label);
   flags->desc[flags->count] = "\0";
+  flags->func_ptr[flags->count] = (void(*)(void))func;
   // TODO: remove desc null terminator and fix in terms on fg_run to not print \n
   //flags->func_ptr = func;
   // func();
@@ -89,13 +90,18 @@ void fg_run(fg_flags *flags, int argc, char** argv){
         if (argv[i][0] == '-' && argv[i][1] != '-'){ // && argv[i][1] == '-'          //printf("found {-} in %s\n", argv[i]);
           memmove(argv[i], argv[i]+1, strlen(argv[i]));
           if (fg_index(flags, argv[i]) == -1) exit(-1);
-          printf("%s\n", flags->desc[fg_index(flags, argv[i])]);
+          if (flags->func_ptr[fg_index(flags, argv[i])] != NULL){
+            flags->func_ptr[fg_index(flags, argv[i])]();
+          } else printf("%s\n", flags->desc[fg_index(flags, argv[i])]);
           // in python it would be if flags->labels[argv[i]] != null
        }
        if (argv[i][0] == '-' && argv[i][1] == '-'){
          memmove(argv[i], argv[i]+2, strlen(argv[i]));
          if (fg_index(flags, argv[i]) == -1) exit(-1);
-         printf("%s\n", flags->desc[fg_index(flags, argv[i])]);
+         if (flags->func_ptr[fg_index(flags, argv[i])] != NULL){
+           flags->func_ptr[fg_index(flags, argv[i])]();
+           
+         } else printf("%s\n", flags->desc[fg_index(flags, argv[i])]);
        }
        // TODO: run from func pointer if not NULL
       }  
