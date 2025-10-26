@@ -76,6 +76,7 @@ size_t fg_naive_index(fg_flags *flags, const char* value){
 }
 
 void fg_run(fg_flags *flags, int argc, char** argv){
+  bool called = false;
   if (flags->count > 0){
     if (argc < 2){
       printf("All commands:\n");
@@ -90,16 +91,18 @@ void fg_run(fg_flags *flags, int argc, char** argv){
         if (argv[i][0] == '-' && argv[i][1] != '-'){ // && argv[i][1] == '-'          //printf("found {-} in %s\n", argv[i]);
           memmove(argv[i], argv[i]+1, strlen(argv[i]));
           if (fg_index(flags, argv[i]) == -1) exit(-1);
-          if (flags->func_ptr[fg_index(flags, argv[i])] != NULL){
+          if (flags->func_ptr[fg_index(flags, argv[i])] != NULL && !called){
             flags->func_ptr[fg_index(flags, argv[i])]();
+            called = true;
           } else printf("%s\n", flags->desc[fg_index(flags, argv[i])]);
           // in python it would be if flags->labels[argv[i]] != null
        }
        if (argv[i][0] == '-' && argv[i][1] == '-'){
          memmove(argv[i], argv[i]+2, strlen(argv[i]));
          if (fg_index(flags, argv[i]) == -1) exit(-1);
-         if (flags->func_ptr[fg_index(flags, argv[i])] != NULL){
+         if (flags->func_ptr[fg_index(flags, argv[i])] != NULL && !called){
            flags->func_ptr[fg_index(flags, argv[i])]();
+           called = true;
            
          } else printf("%s\n", flags->desc[fg_index(flags, argv[i])]);
        }
